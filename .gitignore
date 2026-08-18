@@ -1,0 +1,27 @@
+# Env files
+.env
+git push.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.pyc
+
+# Build
+src/lhdn_automation/build/
+*.spec
+/.build-venv/
+
+# Releases
+/releases
+version_info.txt
+
+# IDE
+.vscode/
+.DS_Store
+
+# Misc
+*.html
+*.log
