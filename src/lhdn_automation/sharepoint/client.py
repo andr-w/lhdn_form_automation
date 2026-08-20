@@ -1,3 +1,5 @@
+import json
+from contextlib import suppress
 from lhdn_automation.config.constants import SHAREPOINT_HOSTNAME, SHAREPOINT_SITE_PATH, SHAREPOINT_SITE_ID, SHAREPOINT_LIST_NAME, SHAREPOINT_LIST_ID, _INITIAL_SHAREPOINT_HOSTNAME, _INITIAL_SHAREPOINT_SITE_PATH, _INITIAL_SHAREPOINT_LIST_NAME
 from lhdn_automation.sharepoint.retry import request_with_retries
 
@@ -87,6 +89,32 @@ def get_selectable_items(token):
         for item in items
         if item.get("fields", {}).get("Status") in ("Approved", "Failed")
     ]
+
+def summarise_item(item):
+    """Build a plain-data display summary for a SharePoint item, usable by any frontend."""
+    fields = item.get("fields", {})
+    raw_json = fields.get("JSON", "")
+    client_name = fields.get("ClientName", "")
+    effective_date = fields.get("EffectiveDate", "")
+    quote_date = fields.get("QuoteDate", "")
+    created_date = fields.get("Created", "")
+    created_date = created_date.split("T")[0] if "T" in created_date else created_date
+
+    if raw_json:
+        with suppress(Exception):
+            parsed = json.loads(raw_json)
+            client_name = parsed.get("ClientName", client_name)
+            effective_date = parsed.get("EffectiveDate", effective_date)
+            quote_date = parsed.get("QuoteDate", quote_date)
+
+    return {
+        "id": item["id"],
+        "status": fields.get("Status", ""),
+        "client_name": client_name,
+        "effective_date": effective_date,
+        "quote_date": quote_date,
+        "created_date": created_date,
+    }
 
 def update_item(token, item_id, fields_dict, site_id=None, list_id=None):
     """

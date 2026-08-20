@@ -3,7 +3,7 @@ import threading
 
 import msal
 
-import secure_storage
+from lhdn_automation.authentication import secure_storage
 
 SCOPES = ["Sites.Selected"]
 

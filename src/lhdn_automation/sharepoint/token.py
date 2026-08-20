@@ -2,7 +2,6 @@
 from lhdn_automation import authentication
 from lhdn_automation.config.constants import CLIENT_ID, TENANT_ID
 
-
 def get_access_token(allow_interactive=True):
     """
     Returns a Graph API access token for the signed-in coworker (delegated

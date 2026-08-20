@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from lhdn_automation.browser.actions import input_credentials, click_login, choose_profile
 from lhdn_automation.browser.driver import wait_and_click, wait_and_send_keys, wait_and_find
 from lhdn_automation.config.constants import PROD_PASSWORD, PROD_IC, WAIT_TIME
-from lhdn_automation.exceptions import pause_for_manual_step
+from lhdn_automation.interaction import pause_for_manual_step
 
 
 def cleanup_sign_in(driver):

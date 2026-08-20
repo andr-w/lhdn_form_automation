@@ -1,6 +1,7 @@
 
+from lhdn_automation import interaction
 from lhdn_automation.exceptions import AutomationAborted
-from lhdn_automation.sharepoint.client import get_selectable_items
+from lhdn_automation.sharepoint.client import get_selectable_items, summarise_item
 import logging
 
 def _cli_confirm(message, allow_abort=False):
@@ -45,7 +46,7 @@ def select_approved_item(selectable_items):
 
         print("Selection out of range. Try again.")
 
-PAUSE_HANDLER = _cli_confirm
+interaction.PAUSE_HANDLER = _cli_confirm
 
 def choose_sharepoint_item(token):
     return select_approved_item(get_selectable_items(token))

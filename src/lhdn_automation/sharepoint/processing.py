@@ -1,7 +1,14 @@
 import json
+import logging
 from contextlib import suppress
+from datetime import datetime, timezone
+
 from lhdn_automation.models import ClientQuotationData
+from lhdn_automation.config.constants import MAX_RETRY_ATTEMPTS, STALE_PROCESSING_TIMEOUT
 from lhdn_automation.sharepoint.client import update_item
+from lhdn_automation.sharepoint.audit_log import create_automation_log, update_automation_log
+from lhdn_automation.browser.forms.orchestrator import main_automate_form
+from lhdn_automation.cli import choose_sharepoint_item
 
 
 def parse_client_data(raw_json):
@@ -31,32 +38,6 @@ def parse_client_data(raw_json):
         OldCompanyNumber=data.get("OldCompanyNumber", ""),
         NewCompanyNumber=data.get("NewCompanyNumber", ""),
     )
-
-def summarise_item(item):
-    """Build a plain-data display summary for a SharePoint item, usable by any frontend."""
-    fields = item.get("fields", {})
-    raw_json = fields.get("JSON", "")
-    client_name = fields.get("ClientName", "")
-    effective_date = fields.get("EffectiveDate", "")
-    quote_date = fields.get("QuoteDate", "")
-    created_date = fields.get("Created", "")
-    created_date = created_date.split("T")[0] if "T" in created_date else created_date
-
-    if raw_json:
-        with suppress(Exception):
-            parsed = json.loads(raw_json)
-            client_name = parsed.get("ClientName", client_name)
-            effective_date = parsed.get("EffectiveDate", effective_date)
-            quote_date = parsed.get("QuoteDate", quote_date)
-
-    return {
-        "id": item["id"],
-        "status": fields.get("Status", ""),
-        "client_name": client_name,
-        "effective_date": effective_date,
-        "quote_date": quote_date,
-        "created_date": created_date,
-    }
 
 def handle_approved(token, firmdata):
     """

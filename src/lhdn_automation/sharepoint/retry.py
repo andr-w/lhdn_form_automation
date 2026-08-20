@@ -2,7 +2,7 @@ from lhdn_automation.config.constants import REQUEST_RETRIES, REQUEST_RETRY_DELA
 import requests
 import logging
 import time
-from exceptions import RequestsTimeout, RequestsConnectionError
+from lhdn_automation.exceptions import RequestsTimeout, RequestsConnectionError
 
 def request_with_retries(method, url, *, retries=None, retry_delay=None, timeout=None, **kwargs):
     if retries is None:

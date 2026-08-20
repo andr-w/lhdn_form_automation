@@ -3,7 +3,7 @@
 import json
 import os
 
-import secure_storage
+from lhdn_automation.authentication import secure_storage
 
 def _settings_path():
     """Refers to the directory returned by secure_storage.app_data_dir() and appends "settings.json" to it."""
