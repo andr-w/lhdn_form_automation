@@ -3,7 +3,7 @@ import logging
 from contextlib import suppress
 from lhdn_automation.sharepoint.client import update_item
 from lhdn_automation.browser.driver import setup_driver, safe_quit_driver
-from lhdn_automation.browser.ctos_lookup import findCompanyNumber
+from lhdn_automation.browser.ctos_lookup import find_company_number
 
 def handle_autofill(token, item_id, fields, headless=True):
     """
@@ -41,7 +41,7 @@ def handle_autofill(token, item_id, fields, headless=True):
     driver = None
     try:
         driver = setup_driver("https://businessreport.ctoscredit.com.my/oneoffreport/home", headless=headless)
-        temp_old_number, temp_new_number = findCompanyNumber(
+        temp_old_number, temp_new_number = find_company_number(
             driver,
             data.get("OldCompanyNumber"),
             data.get("NewCompanyNumber"),

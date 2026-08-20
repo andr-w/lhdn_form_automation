@@ -8,17 +8,12 @@ import tkinter as tk
 from datetime import date, timedelta
 from tkinter import messagebox, scrolledtext, simpledialog, ttk
 
-from lhdn_automation.authentication import auth
+from lhdn_automation.authentication import auth, profiles
 from lhdn_automation import models, exceptions, interaction
 from lhdn_automation.config import constants, settings, validation
 from lhdn_automation.browser import driver, cleanup
 from lhdn_automation.sharepoint import client as sharepoint_client, token as sharepoint_token, audit_log, polling, processing
 from lhdn_automation.update import updater
-
-# KNOWN GAP: profiles.py / ProfileStore does not exist anywhere in the new
-# src/lhdn_automation package layout - it belonged to the old flat script
-# layout and was never ported over. Not invented here; see the reorg plan.
-import profiles
 
 if sys.platform == "win32":
     import ctypes

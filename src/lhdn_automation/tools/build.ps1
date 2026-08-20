@@ -5,7 +5,14 @@ function Assert-Success($message) {
     }
 }
 
-# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser 
+# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# This script lives at src\lhdn_automation\tools\build.ps1 - everything
+# below (requirements.txt, the src\ package, dist\, version_info.txt) is
+# referenced relative to the repo root, not wherever build.ps1 happens to
+# be invoked from.
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
+Set-Location $repoRoot
 
 $venvDir = ".build-venv"
 $venvPython = "$venvDir\Scripts\python.exe"
@@ -24,7 +31,7 @@ Assert-Success "pip install -r requirements.txt failed."
 Assert-Success "pip install pyinstaller failed."
 
 Write-Host "Syncing version_info.txt with APP_VERSION..." -ForegroundColor Cyan
-& $venvPython generate_version_info.py
+& $venvPython src\lhdn_automation\tools\generate_version_info.py
 Assert-Success "Failed to generate version_info.txt - see generate_version_info.py."
 
 Write-Host "Building LHDN-Automation with PyInstaller..." -ForegroundColor Cyan
@@ -35,16 +42,21 @@ Write-Host "Building LHDN-Automation with PyInstaller..." -ForegroundColor Cyan
 # this flag, `webdriver.Edge(...)` fails at runtime with
 # "ModuleNotFoundError: No module named 'selenium.webdriver.edge.options'".
 #
+# --paths src is required now that the app lives under src\lhdn_automation\
+# as a real package: the entry script (src\lhdn_automation\gui\app.py)
+# imports its own siblings as `lhdn_automation.xxx`, which PyInstaller's
+# static analysis can only resolve if src\ is on its search path.
+#
 # --noupx and --version-file are both about reducing Windows
 # Defender/SmartScreen false positives on an unsigned exe: UPX-compressed
 # binaries are a common malware packing signature (explicitly disabled
 # here even though nothing currently installs UPX, so it can't silently
 # start being used later), and a bare exe with no publisher/product
 # metadata at all is one of several things heuristic scanners treat as suspicious.
-& $venvPython -m PyInstaller --noconfirm --clean --onedir --windowed --noupx --version-file version_info.txt --name "LHDN_Automation" --collect-submodules selenium.webdriver.edge gui.py
+& $venvPython -m PyInstaller --noconfirm --clean --onedir --windowed --noupx --version-file version_info.txt --paths src --name "LHDN_Automation" --collect-submodules selenium.webdriver.edge src\lhdn_automation\gui\app.py
 Assert-Success "PyInstaller build failed."
 
-Copy-Item -Path ".envexample" -Destination "dist\LHDN_Automation\.envexample" -Force
+Copy-Item -Path "src\lhdn_automation\config\.envexample" -Destination "dist\LHDN_Automation\.envexample" -Force
 
 $zipPath = "dist\LHDN_Automation.zip"
 Remove-Item -Path $zipPath -Force -ErrorAction SilentlyContinue

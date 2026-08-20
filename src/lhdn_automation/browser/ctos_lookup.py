@@ -4,7 +4,7 @@ from lhdn_automation.config.constants import WAIT_TIME
 from selenium.webdriver.common.by import By
 import logging
 
-def findCompanyNumber(driver, old_company_number="", new_company_number="", company_name=""):
+def find_company_number(driver, old_company_number="", new_company_number="", company_name=""):
     def search_by_name():
         name_to_search = extract_company_name(company_name)
         logging.info("Searching for company name: %s", name_to_search)

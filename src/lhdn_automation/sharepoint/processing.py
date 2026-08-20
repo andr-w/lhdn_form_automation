@@ -110,7 +110,7 @@ def is_processing_stale(fields, now=None):
     """True if `fields` is Status == 'Processing' and hasn't been touched in over STALE_PROCESSING_TIMEOUT."""
     if fields.get("Status") != "Processing":
         return False
-    modified = _parse_graph_datetime(fields.get("Modified"))
+    modified = parse_graph_datetime(fields.get("Modified"))
     if modified is None:
         return False
     now = now or datetime.now(timezone.utc)

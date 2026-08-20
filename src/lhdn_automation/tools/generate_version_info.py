@@ -1,7 +1,11 @@
 import re
 import sys
 
-_SOURCE_FILE = "lhdn_automation.py"
+# Both paths are resolved relative to the current working directory, not
+# this file's location - build.ps1 always Set-Location's to the repo root
+# before invoking this script, so these match its own repo-root-relative
+# references (requirements.txt, --version-file version_info.txt, etc).
+_SOURCE_FILE = "src/lhdn_automation/config/constants.py"
 _OUTPUT_FILE = "version_info.txt"
 _APP_NAME = "LHDN_Automation"  # keep in sync with build.ps1's PyInstaller --name
 

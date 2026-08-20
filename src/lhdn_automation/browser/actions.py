@@ -2,7 +2,7 @@ from lhdn_automation.browser.driver import wait_and_send_keys, wait_and_click, w
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from lhdn_automation.config.constants import COMPANY_SUFFIXES
-import datetime
+from datetime import datetime
 import re
 
 def input_credentials(driver, ID, password):
