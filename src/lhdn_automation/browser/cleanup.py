@@ -1,51 +1,77 @@
 import time
 import logging
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import (
+    TimeoutException,
+    NoSuchElementException,
+    StaleElementReferenceException,
+    ElementClickInterceptedException,
+    ElementNotInteractableException,
+)
 from lhdn_automation.browser.actions import input_credentials, click_login, choose_profile
 from lhdn_automation.browser.driver import wait_and_click, wait_and_send_keys, select_dropdown
-from lhdn_automation.config.constants import PROD_PASSWORD, PROD_IC, WAIT_TIME
-from lhdn_automation.interaction import pause_for_manual_step
+from lhdn_automation.config import constants
+from lhdn_automation.config.constants import WAIT_TIME, MAX_RETRY_ATTEMPTS
+from lhdn_automation.interaction import pause_for_manual_step, pause_before_retry
 
 
-def cleanup_sign_in(driver):
-    """
-    Login and profile selection to bring straight to dashboard for cleanup_scan_and_cancel_one().
-    """
-    input_credentials(driver, PROD_IC, PROD_PASSWORD)
+def _sign_in_attempt(driver):
+    input_credentials(driver, constants.PROD_IC, constants.PROD_PASSWORD)
     click_login(driver)
     driver.implicitly_wait(WAIT_TIME)
     choose_profile(driver)
     driver.implicitly_wait(WAIT_TIME)
 
-def cleanup_scan_and_cancel_one(driver, date):
+def cleanup_sign_in(driver):
     """
-    Navigates to the 'Dalam Simpanan' listing and cancels the first entry
-    matching `date` (dd/mm/yyyy) that has no existing cancellation reference.
-    Returns True if a match was found and cancelled, False otherwise.
+    Login and profile selection to bring straight to dashboard for cleanup_loop().
 
-    The matched row is highlighted directly in the browser and held there
-    for a single Continue/Abort confirmation - previously there were two
-    separate pauses (one before the search even started, one right before
-    the destructive cancel click).
+    Wrapped with the same manual Continue/Abort retry as cleanup_loop() - a
+    slow login page or unexpected element previously threw straight through
+    uncaught, since this ran before any of cleanup_loop()'s protection.
     """
+    for attempt in range(MAX_RETRY_ATTEMPTS):
+        try:
+            return _sign_in_attempt(driver)
+        except (
+            TimeoutException,
+            NoSuchElementException,
+            StaleElementReferenceException,
+            ElementClickInterceptedException,
+            ElementNotInteractableException,
+        ) as error:
+            if attempt < MAX_RETRY_ATTEMPTS - 1:
+                logging.exception("Error on cleanup sign-in attempt %d: %s", attempt + 1, error)
+                pause_before_retry(error)
+                continue
+            logging.exception("Final cleanup sign-in attempt failed.")
+            raise
+
+def _scan_and_cancel_one_attempt(driver, date):
+
     driver.get("https://stamps.hasil.gov.my/stamps/utama/senarai/permohonan/4")
     driver.implicitly_wait(WAIT_TIME)
     select_dropdown(driver, By.ID, "dropdown_status")
     driver.implicitly_wait(WAIT_TIME)
-    wait_and_click(driver, By.XPATH, "//option[@value='1']") # Dalam Simpanan
+    wait_and_click(driver, By.XPATH, "//option[@value='1' and text()='Dalam Simpanan']")
     driver.implicitly_wait(WAIT_TIME)
+
+    pause_for_manual_step(
+        "Confirm the target entry is currently on screen and the table has finished loading, then click Continue to proceed with the automated cleanup, or Abort to leave it untouched.",
+        allow_abort=True,
+    )
 
     rows = driver.find_elements(By.CSS_SELECTOR, "table tbody tr")
     target_row = None
 
     for row in rows:
-        logging.debug("Row: %r", row.text)
+        logging.debug("Row: %r", row.text)  
         cells = row.find_elements(By.TAG_NAME, "td")
         logging.debug("Number of cells: %d", len(cells))
         for i, cell in enumerate(cells):
             logging.debug("%d: %r", i, cell.text)
 
-        if len(cells) >= 6 and cells[5].text.strip() == date and cells[4].text.strip() == "-":
+        if len(cells) >= 6 and cells[5].text.strip() == date and cells[4].text.strip() == "Perjanjian Perkhidmatan":
             target_row = row
             break
 
@@ -77,9 +103,43 @@ def cleanup_scan_and_cancel_one(driver, date):
     time.sleep(1)
     return True
 
+def cleanup_loop(driver, date):
+    """
+    Navigates to the 'Dalam Simpanan' listing and cancels the first entry
+    matching `date` (dd/mm/yyyy). Returns True if a match was found and cancelled,
+    False otherwise.
+
+    Pauses for a manual Continue/Abort twice: once after selecting the
+    'Dalam Simpanan' filter, so the operator can confirm the table has
+    actually finished loading before the row search runs against it, and
+    again right before the destructive cancel click, with the matched row
+    highlighted directly in the browser.
+
+    Transient Selenium failures (stale table, slow page, a fumbled click)
+    pause for a manual Continue/Abort instead of silently propagating, the
+    same as main_automate_form()'s retry loop - otherwise the operator has
+    no chance to fix the page and retry, or to deliberately stop.
+    """
+    for attempt in range(MAX_RETRY_ATTEMPTS):
+        try:
+            return _scan_and_cancel_one_attempt(driver, date)
+        except (
+            TimeoutException,
+            NoSuchElementException,
+            StaleElementReferenceException,
+            ElementClickInterceptedException,
+            ElementNotInteractableException,
+        ) as error:
+            if attempt < MAX_RETRY_ATTEMPTS - 1:
+                logging.exception("Error on cleanup attempt %d: %s", attempt + 1, error)
+                pause_before_retry(error)
+                continue
+            logging.exception("Final cleanup attempt failed.")
+            raise
+
 def cleanup_test_entries(driver, date):  # date in the form of dd/mm/yyyy
     """Signs in once, then cancels every matching entry until none remain."""
     cleanup_sign_in(driver)
-    while cleanup_scan_and_cancel_one(driver, date):
+    while cleanup_loop(driver, date):
         pass
     time.sleep(1)  # or use WebDriverWait

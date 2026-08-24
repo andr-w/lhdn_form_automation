@@ -10,7 +10,7 @@ from selenium.common.exceptions import TimeoutException
 from lhdn_automation.models import FirmData, ClientQuotationData
 
 
-def maklumat_am_penyeteman(driver, date):
+def maklumat_am_page_1(driver, date):
     preferred_options = ["Kuala Lumpur", "Selangor", "Putrajaya"] # List of preferred options for Pejabat Setem
     driver.get('https://stamps.hasil.gov.my/stamps/form/application')
     wait_and_click(driver, By.XPATH, "//div[@class='form-group']//div[@class='radio']//input[@class='radio-per' and @value='4']") # Selecting "Sekuriti" button
@@ -25,16 +25,18 @@ def maklumat_am_penyeteman(driver, date):
     select_date(driver, date)
     wait_and_click(driver, By.XPATH, "//button[@type='submit' and @id='btn-ma-submit']") # Confirming date selection
 
-def maklumat_am_main_page(driver):
+def maklumat_am_page_2(driver):
     # Pejabat Setem will follow previous section so it will be ignored for now
     driver.implicitly_wait(WAIT_TIME)
     wait_and_send_keys(driver, By.CSS_SELECTOR, "input#namaperjanjian", "Service Agreement") # Entering Service Agreement
     time.sleep(0.2)
     wait_and_click(driver, By.XPATH, "//div[@id='namaperjanjian-suggestion-list']//strong[text()='Service Agreement']") # Selecting "Service Agreement" button
+    time.sleep(0.2)
+    wait_and_click(driver, By.XPATH, "//input[@value='Simpan Maklumat Am' and @type='button']") # Confirming Maklumat Am
 
-def fill_makluman_am(driver, date):
-    maklumat_am_penyeteman(driver, date)
-    maklumat_am_main_page(driver)
+def fill_maklumat_am(driver, date):
+    maklumat_am_page_1(driver, date)
+    maklumat_am_page_2(driver)
 
 def bahagian_a_maklumat_pertama(driver, firmdata: FirmData):
     wait_and_click(driver, By.XPATH, "//div[@class='panel-body']//strong[contains(text(), 'Syarikat/Perniagaan/Agensi Berdaftar Dengan SSM')]")
@@ -47,8 +49,10 @@ def bahagian_a_maklumat_pertama(driver, firmdata: FirmData):
 
     select_dropdown(driver, By.CSS_SELECTOR, "select#tb_syarikat.form-control") # Selecting Company Location Type dropdown
     wait_and_click(driver, By.XPATH, "//select[@id='tb_syarikat']//option[@value='1']") # Selecting Local option
+
     wait_and_send_keys(driver, By.CSS_SELECTOR, "input.form-control[name='tb_alamat_1']", firmdata.AddressLine1) # Entering Address Line 1
     wait_and_send_keys(driver, By.CSS_SELECTOR, "input.form-control[name='tb_alamat_2']", firmdata.AddressLine2) # Entering Address Line 2
+    wait_and_send_keys(driver, By.CSS_SELECTOR, "input.form-control[name='tb_alamat_3']", firmdata.AddressLine3) # Entering Address Line 3
 
     wait_and_send_keys(driver, By.CSS_SELECTOR, "input.form-control[name='tb_city']", firmdata.City) # Entering City
     select_dropdown(driver, By.CSS_SELECTOR, "select#negeri1.form-control") # Selecting State dropdown

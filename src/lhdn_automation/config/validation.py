@@ -1,13 +1,4 @@
-
-import os
-import sys
-
-from dotenv import load_dotenv
-
 from lhdn_automation.config.constants import *
-
-_APP_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(_APP_DIR, ".env"))
 
 class ConfigurationError(RuntimeError):
     """Raised when required org/company configuration is missing or blank."""

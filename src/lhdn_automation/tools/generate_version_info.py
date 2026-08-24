@@ -7,7 +7,7 @@ import sys
 # references (requirements.txt, --version-file version_info.txt, etc).
 _SOURCE_FILE = "src/lhdn_automation/config/constants.py"
 _OUTPUT_FILE = "version_info.txt"
-_APP_NAME = "LHDN_Automation"  # keep in sync with build.ps1's PyInstaller --name
+_APP_NAME = "LHDN Automation"  # keep in sync with build.ps1's PyInstaller --name
 
 
 def _read_app_version():

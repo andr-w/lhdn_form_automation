@@ -1198,14 +1198,14 @@ class LHDNApp:
     def _run_cleanup_worker(self, cleanup_date, retrying):
         try:
             if retrying:
-                driver = self.cleanup_driver
+                browser_driver = self.cleanup_driver
                 logging.info("Rechecking the table on the already-open cleanup browser.")
-                while cleanup.cleanup_scan_and_cancel_one(driver, cleanup_date):
+                while cleanup.cleanup_loop(browser_driver, cleanup_date):
                     pass
             else:
-                driver = driver.setup_driver(constants.BASE_URL)
-                self.cleanup_driver = driver
-                cleanup.cleanup_test_entries(driver, cleanup_date)
+                browser_driver = driver.setup_driver(constants.BASE_URL)
+                self.cleanup_driver = browser_driver
+                cleanup.cleanup_test_entries(browser_driver, cleanup_date)
             logging.info("Cleanup finished. Browser left open for review.")
         except exceptions.AutomationAborted:
             logging.info("Cleanup aborted by user. Browser left open for review.")

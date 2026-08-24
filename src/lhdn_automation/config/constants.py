@@ -1,5 +1,11 @@
 import os
+import sys
 from datetime import timedelta
+
+from dotenv import load_dotenv
+
+_APP_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(_APP_DIR, ".env"))
 
 TENANT_ID = os.getenv("APP_TENANT_ID")
 CLIENT_ID = os.getenv("APP_CLIENT_ID")  # public-client app ID for delegated sign-in - see auth.py

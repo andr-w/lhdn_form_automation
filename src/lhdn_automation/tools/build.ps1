@@ -34,7 +34,7 @@ Write-Host "Syncing version_info.txt with APP_VERSION..." -ForegroundColor Cyan
 & $venvPython src\lhdn_automation\tools\generate_version_info.py
 Assert-Success "Failed to generate version_info.txt - see generate_version_info.py."
 
-Write-Host "Building LHDN-Automation with PyInstaller..." -ForegroundColor Cyan
+Write-Host "Building LHDN Automation with PyInstaller..." -ForegroundColor Cyan
 # --collect-submodules selenium.webdriver.edge is required: selenium's
 # webdriver/__init__.py lazily imports browser-specific submodules (e.g.
 # selenium.webdriver.edge.options) via __getattr__ at call time, not a
@@ -53,17 +53,17 @@ Write-Host "Building LHDN-Automation with PyInstaller..." -ForegroundColor Cyan
 # here even though nothing currently installs UPX, so it can't silently
 # start being used later), and a bare exe with no publisher/product
 # metadata at all is one of several things heuristic scanners treat as suspicious.
-& $venvPython -m PyInstaller --noconfirm --clean --onedir --windowed --noupx --version-file version_info.txt --paths src --name "LHDN_Automation" --collect-submodules selenium.webdriver.edge src\lhdn_automation\gui\app.py
+& $venvPython -m PyInstaller --noconfirm --clean --onedir --windowed --noupx --version-file version_info.txt --paths src --name "LHDN Automation" --collect-submodules selenium.webdriver.edge src\lhdn_automation\gui\app.py
 Assert-Success "PyInstaller build failed."
 
-Copy-Item -Path "src\lhdn_automation\config\.envexample" -Destination "dist\LHDN_Automation\.envexample" -Force
+Copy-Item -Path "src\lhdn_automation\config\.envexample" -Destination "dist\LHDN Automation\.envexample" -Force
 
-$zipPath = "dist\LHDN_Automation.zip"
+$zipPath = "dist\LHDN Automation.zip"
 Remove-Item -Path $zipPath -Force -ErrorAction SilentlyContinue
-Compress-Archive -Path "dist\LHDN_Automation\*" -DestinationPath $zipPath
+Compress-Archive -Path "dist\LHDN Automation\*" -DestinationPath $zipPath
 Assert-Success "Failed to zip the build output."
 
 Write-Host ""
-Write-Host "Build complete: dist\LHDN_Automation.zip" -ForegroundColor Green
-Write-Host "Refer to dist\LHDN_Automation.zip and include the .envexample file."
+Write-Host "Build complete: dist\LHDN Automation.zip" -ForegroundColor Green
+Write-Host "Refer to dist\LHDN Automation.zip and include the .envexample file."
 

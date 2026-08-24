@@ -12,19 +12,20 @@ from selenium.common.exceptions import (
 
 from lhdn_automation.browser.actions import input_credentials, click_login, choose_profile
 from lhdn_automation.browser.driver import setup_driver, replace_driver
-from lhdn_automation.browser.forms.sekuriti import fill_makluman_am, fill_bahagian_a, fill_bahagian_b, fill_bahagian_c
-from lhdn_automation.config.constants import WAIT_TIME, BASE_URL, MAX_RETRY_ATTEMPTS, PROD_IC, PROD_PASSWORD
+from lhdn_automation.browser.forms.sekuriti import fill_maklumat_am, fill_bahagian_a, fill_bahagian_b, fill_bahagian_c, fill_maklumat_am
+from lhdn_automation.config import constants
+from lhdn_automation.config.constants import WAIT_TIME, BASE_URL, MAX_RETRY_ATTEMPTS
 from lhdn_automation.config.validation import validate_firm_data
 from lhdn_automation.interaction import pause_before_retry
 
 
 def main_flow(driver, ClientData, FirmData):
-    input_credentials(driver, PROD_IC, PROD_PASSWORD)
+    input_credentials(driver, constants.PROD_IC, constants.PROD_PASSWORD)
     click_login(driver)
     driver.implicitly_wait(WAIT_TIME)
     choose_profile(driver)
     driver.implicitly_wait(WAIT_TIME)
-    fill_makluman_am(driver, ClientData.EffectiveDate)
+    fill_maklumat_am(driver, ClientData.EffectiveDate)
     driver.implicitly_wait(WAIT_TIME)
     fill_bahagian_a(driver, ClientData.SSMOption, FirmData, ClientData)
     driver.implicitly_wait(WAIT_TIME)
