@@ -477,7 +477,7 @@ SHAREPOINT_CONFIG_SCHEMA = [
         "set": lambda v: setattr(constants, "SHAREPOINT_LOG_LIST_NAME", v),
     },
     {
-        "key": "estamp_base_url",
+        "key": "ESTAMP_PORTAL_URL",
         "label": "eStamp base URL",
         "description": "Base URL for the LHDN eStamp site.",
         "get": lambda: constants.BASE_URL,

@@ -9,7 +9,7 @@ load_dotenv(os.path.join(_APP_DIR, ".env"))
 
 TENANT_ID = os.getenv("APP_TENANT_ID")
 CLIENT_ID = os.getenv("APP_CLIENT_ID")  # public-client app ID for delegated sign-in - see auth.py
-BASE_URL = os.getenv("ESTAMP_BASE_URL")
+BASE_URL = os.getenv("ESTAMP_PORTAL_URL")
 
 PROD_IC = os.getenv("ESTAMP_PROD_IC")
 PROD_PASSWORD = os.getenv("ESTAMP_PROD_PASSWORD")

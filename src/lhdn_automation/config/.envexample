@@ -6,7 +6,7 @@ SHAREPOINT_LIST_NAME="Stamp Entries"
 SHAREPOINT_LOG_LIST_NAME="Application Logs"
 APP_TENANT_ID="12345678-abcd-4abc-9def-1234567890ab"
 APP_CLIENT_ID="abcdef12-3456-7890-abcd-ef1234567890"
-ESTAMP_BASE_URL="https://stamps.hasil.gov.my/stamps/"
+ESTAMP_PORTAL_URL="https://stamps.hasil.gov.my/stamps/"
 
 # Optional, only used for in-app access to an external editing through Power Apps
 POWERAPP_EDIT_ENTRIES_URL="https://apps.powerapps.com/play/e/contoso/app/12345678-1234-1234-1234-1234567890ab"

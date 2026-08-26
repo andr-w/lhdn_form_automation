@@ -10,7 +10,7 @@ def validate_runtime_config():
     required = {
         "APP_TENANT_ID": TENANT_ID,
         "APP_CLIENT_ID": CLIENT_ID,
-        "ESTAMP_BASE_URL": BASE_URL,
+        "ESTAMP_PORTAL_URL": BASE_URL,
         "SHAREPOINT_SITE_ID": SHAREPOINT_SITE_ID,
         "SHAREPOINT_LIST_ID": SHAREPOINT_LIST_ID,
         "SHAREPOINT_HOSTNAME": SHAREPOINT_HOSTNAME,
