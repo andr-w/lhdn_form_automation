@@ -651,23 +651,82 @@ class SharePointConfigDialog(tk.Toplevel):
 def apply_saved_firm_data(firm_data):
     """Loads a persisted FirmData override (if any) and applies it onto the given instance. Call once per LHDNApp startup, right after models.default_firm_data()."""
     all_settings = settings.load()
-    saved = all_settings.get("firm_data")
+    # .get(..., {}) rather than .get(...): on a fresh install settings.json
+    # doesn't exist yet (settings.load() returns {}), so there's no
+    # "firm_data" key at all - .get("firm_data") would return None and the
+    # check below would crash on it.
+    saved = all_settings.get("firm_data", {})
     for field in dataclasses.fields(models.FirmData):
         if field.name in saved:
             setattr(firm_data, field.name, saved[field.name])
 
 
+def firm_data_is_complete(firm_data):
+    """True if every field validate_firm_data() requires is filled in."""
+    try:
+        validation.validate_firm_data(firm_data)
+        return True
+    except validation.ConfigurationError:
+        return False
+
+
+def export_settings_flow(parent):
+    """
+    Writes settings.json to the export path (see settings.export_settings()).
+    Returns True if the export succeeded, False if the user cancelled or an error occurred.
+    """
+    try:
+        path = settings.export_settings()
+    except OSError as error:
+        messagebox.showerror("Export Settings", f"Couldn't write settings export:\n{error}", parent=parent)
+        return False
+    logging.info("Settings exported to %s", path)
+    messagebox.showinfo("Export Settings", f"Settings exported to:\n{path}", parent=parent)
+    return True
+
+
+def import_settings_flow(parent, firm_data):
+    """
+    Prompts for an export file via a file dialog, merges it into settings.json,
+    and re-applies settings/SharePoint config/firm data onto the live modules
+    and `firm_data`. Shared by LHDNApp's Configuration menu and FirmDataDialog.
+    Returns True if a file was picked and successfully imported.
+    """
+    path = filedialog.askopenfilename(
+        title="Import Settings",
+        initialdir=os.path.dirname(settings.export_path()),
+        filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+        parent=parent,
+    )
+    if not path:
+        return False  # user cancelled
+    if not messagebox.askyesno(
+        "Import Settings",
+        "This will overwrite your current settings, SharePoint configuration, "
+        "and company details with the values from the selected file. Continue?",
+        parent=parent,
+    ):
+        return False
+    try:
+        imported = settings.import_settings(path)
+    except (OSError, ValueError) as error:
+        messagebox.showerror("Import Settings", f"Couldn't read settings export:\n{error}", parent=parent)
+        return False
+
+    apply_saved_settings()
+    apply_saved_sharepoint_config()
+    apply_saved_firm_data(firm_data)
+    logging.info("Settings imported: %s", imported)
+    messagebox.showinfo("Import Settings", "Settings imported and applied.", parent=parent)
+    return True
+
+
 class FirmDataDialog(tk.Toplevel):
     """
-    Lets the operator view/edit the firm's own company details (models.FirmData) -
-    the agent/filer info stamped onto every eStamp submission, as opposed to
-    the per-client ClientQuotationData parsed from each SharePoint entry's
-    JSON. Fields are generated directly from FirmData's own dataclass field
-    names rather than a hand-maintained label list, so this dialog can't
-    drift out of sync if that dataclass ever changes.
+    Lets the operator view/edit the firm's details (models.FirmData)
     """
 
-    def __init__(self, root, app):
+    def __init__(self, root, app, prompt_incomplete=False):
         super().__init__(root)
         self.app = app
         self.title("Edit Company Details")
@@ -685,9 +744,21 @@ class FirmDataDialog(tk.Toplevel):
             justify="left",
         ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 12))
 
+        next_row = 1
+        if prompt_incomplete:
+            ttk.Label(
+                body,
+                text="Company details are incomplete - fill in the blank fields below, or use "
+                     "Import Settings to load them from an exported settings file.",
+                foreground="#a94442",
+                wraplength=420,
+                justify="left",
+            ).grid(row=next_row, column=0, columnspan=2, sticky="w", pady=(0, 12))
+            next_row += 1
+
         self._fields = dataclasses.fields(models.FirmData)
         self._vars = {}
-        for row, field in enumerate(self._fields, start=1):
+        for row, field in enumerate(self._fields, start=next_row):
             ttk.Label(body, text=f"{field.name}:").grid(row=row, column=0, sticky="w", pady=4, padx=(0, 10))
             current_value = getattr(app.firm_data, field.name)
             var = tk.StringVar(value="" if current_value is None else str(current_value))
@@ -695,24 +766,34 @@ class FirmDataDialog(tk.Toplevel):
             self._vars[field.name] = var
 
         button_row = ttk.Frame(body)
-        button_row.grid(row=len(self._fields) + 1, column=0, columnspan=2, sticky="w", pady=(16, 0))
+        button_row.grid(
+            row=next_row + len(self._fields), column=0, columnspan=2, sticky="w", pady=(16, 0)
+        )
         ttk.Button(button_row, text="Save", command=self._save).pack(side="left")
         ttk.Button(button_row, text="Cancel", command=self.destroy).pack(side="left", padx=(8, 0))
+        ttk.Separator(button_row, orient="vertical").pack(side="left", fill="y", padx=8)
+        ttk.Button(button_row, text="Export Settings...", command=self._export_settings).pack(side="left")
+        ttk.Button(button_row, text="Import Settings...", command=self._import_settings).pack(
+            side="left", padx=(8, 0)
+        )
 
         self.grab_set()
         self.focus_set()
 
+    def _export_settings(self):
+        export_settings_flow(self)
+
+    def _import_settings(self):
+        if import_settings_flow(self, self.app.firm_data):
+            self._refresh_fields()
+
+    def _refresh_fields(self):
+        """Reflects self.app.firm_data (just overwritten by an import) back onto the entry fields."""
+        for field in self._fields:
+            current_value = getattr(self.app.firm_data, field.name)
+            self._vars[field.name].set("" if current_value is None else str(current_value))
+
     def _save(self):
-        # No blank-field validation: default_firm_data() itself already ships
-        # EmailAddress="" out of the box, so a required plain-str field
-        # being blank is an accepted, real value here, not an error - only
-        # AddressLine3 (Optional[str] = None in FirmData) is normalised from
-        # blank to None so the dataclass keeps its actual None, rather than
-        # storing "" where the rest of the app expects None. A field whose
-        # default is literally None (as opposed to dataclasses.MISSING,
-        # which every other field has) is exactly that field, so this stays
-        # correct if FirmData's fields ever change without needing to name
-        # AddressLine3 specifically.
         parsed = {}
         for field in self._fields:
             value = self._vars[field.name].get().strip()
@@ -759,6 +840,22 @@ class LHDNApp:
         self._start_polling()
         self._refresh_entries()
 
+        if not firm_data_is_complete(self.firm_data):
+            self._prompt_firm_data_setup()
+
+    def _prompt_firm_data_setup(self):
+        """
+        Auto-opens the company details dialog when required firm data is
+        missing - a genuine first-run state on a fresh install (settings.json
+        doesn't exist yet, so firm_data defaults to all-blank), but can also
+        recur any time required fields are cleared out. The dialog carries
+        its own Import Settings button so the operator can populate
+        everything from another install's export without having to reach the
+        Configuration menu, which this modal dialog blocks anyway.
+        """
+        dialog = FirmDataDialog(self.root, self, prompt_incomplete=True)
+        self.root.wait_window(dialog)
+
     def _setup_logging(self):
         handler = QueueLogHandler(self.log_queue)
         handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", "%H:%M:%S"))
@@ -794,39 +891,10 @@ class LHDNApp:
         FirmDataDialog(self.root, self)
 
     def _export_settings(self):
-        try:
-            path = settings.export_settings()
-        except OSError as error:
-            messagebox.showerror("Export Settings", f"Couldn't write settings export:\n{error}")
-            return
-        logging.info("Settings exported to %s", path)
-        messagebox.showinfo("Export Settings", f"Settings exported to:\n{path}")
+        export_settings_flow(self.root)
 
     def _import_settings(self):
-        path = filedialog.askopenfilename(
-            title="Import Settings",
-            initialdir=os.path.dirname(settings.export_path()),
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
-        )
-        if not path:
-            return  # user cancelled
-        if not messagebox.askyesno(
-            "Import Settings",
-            "This will overwrite your current settings, SharePoint configuration, "
-            "and company details with the values from the selected file. Continue?",
-        ):
-            return
-        try:
-            imported = settings.import_settings(path)
-        except (OSError, ValueError) as error:
-            messagebox.showerror("Import Settings", f"Couldn't read settings export:\n{error}")
-            return
-
-        apply_saved_settings()
-        apply_saved_sharepoint_config()
-        apply_saved_firm_data(self.firm_data)
-        logging.info("Settings imported: %s", imported)
-        messagebox.showinfo("Import Settings", "Settings imported and applied.")
+        import_settings_flow(self.root, self.firm_data)
 
     def _test_automation_log_access(self):
         if self.worker_busy.is_set():
