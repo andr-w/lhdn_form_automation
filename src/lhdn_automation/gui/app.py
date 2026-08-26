@@ -1,12 +1,13 @@
 import dataclasses
 import logging
+import os
 import queue
 import sys
 import threading
 import webbrowser
 import tkinter as tk
 from datetime import date, timedelta
-from tkinter import messagebox, scrolledtext, simpledialog, ttk
+from tkinter import filedialog, messagebox, scrolledtext, simpledialog, ttk
 
 from lhdn_automation.authentication import auth, profiles
 from lhdn_automation import models, exceptions, interaction
@@ -770,6 +771,10 @@ class LHDNApp:
         config_menu.add_command(label="Edit Settings...", command=self._open_settings)
         config_menu.add_command(label="Edit SharePoint Configuration...", command=self._open_sharepoint_config)
         config_menu.add_command(label="Edit Company Details...", command=self._open_firm_data)
+        config_menu.add_separator()
+        config_menu.add_command(label="Export Settings...", command=self._export_settings)
+        config_menu.add_command(label="Import Settings...", command=self._import_settings)
+        config_menu.add_separator()
         config_menu.add_command(label="Test Automation Logs Access...", command=self._test_automation_log_access)
         menubar.add_cascade(label="Configuration", menu=config_menu)
 
@@ -787,6 +792,41 @@ class LHDNApp:
 
     def _open_firm_data(self):
         FirmDataDialog(self.root, self)
+
+    def _export_settings(self):
+        try:
+            path = settings.export_settings()
+        except OSError as error:
+            messagebox.showerror("Export Settings", f"Couldn't write settings export:\n{error}")
+            return
+        logging.info("Settings exported to %s", path)
+        messagebox.showinfo("Export Settings", f"Settings exported to:\n{path}")
+
+    def _import_settings(self):
+        path = filedialog.askopenfilename(
+            title="Import Settings",
+            initialdir=os.path.dirname(settings.export_path()),
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+        )
+        if not path:
+            return  # user cancelled
+        if not messagebox.askyesno(
+            "Import Settings",
+            "This will overwrite your current settings, SharePoint configuration, "
+            "and company details with the values from the selected file. Continue?",
+        ):
+            return
+        try:
+            imported = settings.import_settings(path)
+        except (OSError, ValueError) as error:
+            messagebox.showerror("Import Settings", f"Couldn't read settings export:\n{error}")
+            return
+
+        apply_saved_settings()
+        apply_saved_sharepoint_config()
+        apply_saved_firm_data(self.firm_data)
+        logging.info("Settings imported: %s", imported)
+        messagebox.showinfo("Import Settings", "Settings imported and applied.")
 
     def _test_automation_log_access(self):
         if self.worker_busy.is_set():
@@ -1152,8 +1192,8 @@ class LHDNApp:
         ttk.Label(
             frame,
             text=(
-                "Cancels test 'Dalam Simpanan' entries submitted on the given date.\n"
-                "A visible browser opens and you'll be prompted to confirm each manual step. If a "
+                "Cancels test draft entries submitted on the given date.\n"
+                "A browser will open and the program wil sort through all table entries. If a "
                 "search finds nothing, the browser stays open - clicking the button again rechecks "
                 "the same window instead of opening a new one and signing in again."
             ),

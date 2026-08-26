@@ -1,6 +1,8 @@
 import time
 import logging
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
     TimeoutException,
     NoSuchElementException,
@@ -9,7 +11,7 @@ from selenium.common.exceptions import (
     ElementNotInteractableException,
 )
 from lhdn_automation.browser.actions import input_credentials, click_login, choose_profile
-from lhdn_automation.browser.driver import wait_and_click, wait_and_send_keys, select_dropdown
+from lhdn_automation.browser.driver import wait_and_click, wait_and_send_keys, select_dropdown, wait_and_find
 from lhdn_automation.config import constants
 from lhdn_automation.config.constants import WAIT_TIME, MAX_RETRY_ATTEMPTS
 from lhdn_automation.interaction import pause_for_manual_step, pause_before_retry
@@ -47,22 +49,8 @@ def cleanup_sign_in(driver):
             logging.exception("Final cleanup sign-in attempt failed.")
             raise
 
-def _scan_and_cancel_one_attempt(driver, date):
-
-    driver.get("https://stamps.hasil.gov.my/stamps/utama/senarai/permohonan/4")
-    driver.implicitly_wait(WAIT_TIME)
-    select_dropdown(driver, By.ID, "dropdown_status")
-    driver.implicitly_wait(WAIT_TIME)
-    wait_and_click(driver, By.XPATH, "//option[@value='1' and text()='Dalam Simpanan']")
-    driver.implicitly_wait(WAIT_TIME)
-
-    pause_for_manual_step(
-        "Confirm the target entry is currently on screen and the table has finished loading, then click Continue to proceed with the automated cleanup, or Abort to leave it untouched.",
-        allow_abort=True,
-    )
-
+def _scan_table_entries(driver, date):
     rows = driver.find_elements(By.CSS_SELECTOR, "table tbody tr")
-    target_row = None
 
     for row in rows:
         logging.debug("Row: %r", row.text)  
@@ -73,9 +61,46 @@ def _scan_and_cancel_one_attempt(driver, date):
 
         if len(cells) >= 6 and cells[5].text.strip() == date and cells[4].text.strip() == "Perjanjian Perkhidmatan":
             target_row = row
-            break
+            return target_row
+    return None
+
+
+def _table_scan_loop(driver, date):
+    table_page = 1
+    driver.get("https://stamps.hasil.gov.my/stamps/utama/senarai/permohonan/4")
+    driver.implicitly_wait(WAIT_TIME)
+    select_dropdown(driver, By.ID, "dropdown_status")
+    driver.implicitly_wait(WAIT_TIME)
+    wait_and_click(driver, By.XPATH, "//option[@value='1' and text()='Dalam Simpanan']")
+    driver.implicitly_wait(WAIT_TIME)
+
+    target_row = None
+
+    WebDriverWait(driver, WAIT_TIME).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
+    )
+
+    while target_row is None:
+        target_row = _scan_table_entries(driver, date)
+        if target_row is None:
+            next_button = wait_and_find(driver, By.CSS_SELECTOR, "li.paginate_button.next")
+            if "disabled" in next_button.get_attribute("class"):
+                break  # No more pages to check
+
+            old_first_row = driver.find_element(By.CSS_SELECTOR, "table tbody tr")
+            wait_and_click(driver, By.CSS_SELECTOR, "li.paginate_button.next")
+            WebDriverWait(driver, WAIT_TIME).until(EC.staleness_of(old_first_row))
+            WebDriverWait(driver, WAIT_TIME).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
+            )
+            table_page += 1
+            logging.info("Moved to table page %d.", table_page)
 
     if target_row is None:
+        pause_for_manual_step(
+        f"No matching entry found for {date} after scanning {table_page} page(s).",
+        allow_abort=False,
+    )
         logging.info("No matching entry found for %s.", date)
         return False
 
@@ -109,12 +134,6 @@ def cleanup_loop(driver, date):
     matching `date` (dd/mm/yyyy). Returns True if a match was found and cancelled,
     False otherwise.
 
-    Pauses for a manual Continue/Abort twice: once after selecting the
-    'Dalam Simpanan' filter, so the operator can confirm the table has
-    actually finished loading before the row search runs against it, and
-    again right before the destructive cancel click, with the matched row
-    highlighted directly in the browser.
-
     Transient Selenium failures (stale table, slow page, a fumbled click)
     pause for a manual Continue/Abort instead of silently propagating, the
     same as main_automate_form()'s retry loop - otherwise the operator has
@@ -122,7 +141,7 @@ def cleanup_loop(driver, date):
     """
     for attempt in range(MAX_RETRY_ATTEMPTS):
         try:
-            return _scan_and_cancel_one_attempt(driver, date)
+            return _table_scan_loop(driver, date)
         except (
             TimeoutException,
             NoSuchElementException,
