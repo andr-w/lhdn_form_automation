@@ -758,16 +758,44 @@ class FirmDataDialog(tk.Toplevel):
 
         self._fields = dataclasses.fields(models.FirmData)
         self._vars = {}
-        for row, field in enumerate(self._fields, start=next_row):
+        text_fields = [f for f in self._fields if f.name not in models.CITY_PRIORITY_FIELDS]
+        row = next_row
+        for row, field in enumerate(text_fields, start=next_row):
             ttk.Label(body, text=f"{field.name}:").grid(row=row, column=0, sticky="w", pady=4, padx=(0, 10))
             current_value = getattr(app.firm_data, field.name)
             var = tk.StringVar(value="" if current_value is None else str(current_value))
             ttk.Entry(body, textvariable=var, width=42).grid(row=row, column=1, sticky="w", pady=4)
             self._vars[field.name] = var
+        next_row = row + 1
+
+        ttk.Separator(body, orient="horizontal").grid(
+            row=next_row, column=0, columnspan=2, sticky="ew", pady=(8, 8)
+        )
+        next_row += 1
+        ttk.Label(
+            body,
+            text="City Priority (Pejabat Setem) - tried in order from highest to lowest priority; the first one found in the "
+                "dropdown is used. Leave fields blank if unneeded.",
+            wraplength=420,
+            justify="left",
+        ).grid(row=next_row, column=0, columnspan=2, sticky="w", pady=(0, 6))
+        next_row += 1
+
+        city_choices = [""] + models.MALAYSIAN_STATES
+        for offset, field_name in enumerate(models.CITY_PRIORITY_FIELDS):
+            row = next_row + offset
+            ttk.Label(body, text=f"Priority {offset + 1}:").grid(row=row, column=0, sticky="w", pady=4, padx=(0, 10))
+            current_value = getattr(app.firm_data, field_name)
+            var = tk.StringVar(value="" if current_value is None else str(current_value))
+            ttk.Combobox(
+                body, textvariable=var, values=city_choices, state="readonly", width=39
+            ).grid(row=row, column=1, sticky="w", pady=4)
+            self._vars[field_name] = var
+        next_row += len(models.CITY_PRIORITY_FIELDS)
 
         button_row = ttk.Frame(body)
         button_row.grid(
-            row=next_row + len(self._fields), column=0, columnspan=2, sticky="w", pady=(16, 0)
+            row=next_row, column=0, columnspan=2, sticky="w", pady=(16, 0)
         )
         ttk.Button(button_row, text="Save", command=self._save).pack(side="left")
         ttk.Button(button_row, text="Cancel", command=self.destroy).pack(side="left", padx=(8, 0))
@@ -834,8 +862,9 @@ class LHDNApp:
 
         # __init__ runs before main() calls root.mainloop(), so anything that
         # spawns a background thread touching Tk (root.after, etc.) can't
-        # safely start yet. Since the mainloop is about to start, schedule a 0-delay callback to run after
-        # mainloop starts, which is safe to spawn threads and avoid race conditions.
+        # safely start yet. Since the mainloop is about to start, schedule a 0-delay 
+        # callback to run after mainloop starts, which is safe to spawn threads 
+        # and avoid race conditions.
         self.root.after(0, self._post_init)
 
     def _post_init(self):

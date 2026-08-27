@@ -1,5 +1,30 @@
 from dataclasses import dataclass
 
+# Selectable in the Pejabat Setem dropdown (sekuriti.maklumat_am_page_1) - the
+# firm's CityPriority1..5 fields must be chosen from this list.
+MALAYSIAN_STATES = [
+    "Johor",
+    "Kedah",
+    "Kelantan",
+    "Melaka",
+    "Negeri Sembilan",
+    "Pahang",
+    "Pulau Pinang",
+    "Perak",
+    "Perlis",
+    "Selangor",
+    "Terengganu",
+    "Sabah",
+    "Sarawak",
+    "Kuala Lumpur",
+    "Putrajaya",
+    "Labuan",
+]
+
+# FirmData field names holding the Pejabat Setem fallback order, highest
+# priority first.
+CITY_PRIORITY_FIELDS = ("CityPriority1", "CityPriority2", "CityPriority3", "CityPriority4", "CityPriority5")
+
 @dataclass
 class ClientQuotationData:
     ClientName: str
@@ -38,6 +63,13 @@ class FirmData:
     OldCompanyNumber: str
     NewCompanyNumber: str
     AddressLine3: str | None = None
+    # Pejabat Setem dropdown fallback order (see sekuriti.maklumat_am_page_1):
+    # tried highest priority first, skipping any left blank.
+    CityPriority1: str = ""
+    CityPriority2: str = ""
+    CityPriority3: str = ""
+    CityPriority4: str = ""
+    CityPriority5: str = ""
 
 def default_firm_data():
     """
@@ -56,5 +88,8 @@ def default_firm_data():
         AddressLine1="",
         AddressLine2="",
         OldCompanyNumber="",
-        NewCompanyNumber=""
+        NewCompanyNumber="",
+        CityPriority1="Wilayah Persekutuan Kuala Lumpur",
+        CityPriority2="Selangor",
+        CityPriority3="Wilayah Persekutuan Putrajaya",
     )

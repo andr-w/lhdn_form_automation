@@ -7,11 +7,17 @@ import time
 import logging
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
-from lhdn_automation.models import FirmData, ClientQuotationData
+from lhdn_automation.models import FirmData, ClientQuotationData, CITY_PRIORITY_FIELDS
+
+# Fallback used only if the firm's CityPriority1..5 fields (Configuration ->
+# Edit Company Details) are all left blank.
+DEFAULT_PREFERRED_OPTIONS = ["Wilayah Persekutuan Kuala Lumpur", "Selangor", "Wilayah Persekutuan Putrajaya"]
 
 
-def maklumat_am_page_1(driver, date):
-    preferred_options = ["Kuala Lumpur", "Selangor", "Putrajaya"] # List of preferred options for Pejabat Setem
+def maklumat_am_page_1(driver, date, firmdata: FirmData):
+    preferred_options = [
+        getattr(firmdata, name) for name in CITY_PRIORITY_FIELDS if getattr(firmdata, name)
+    ] or DEFAULT_PREFERRED_OPTIONS  # List of preferred options for Pejabat Setem
     driver.get('https://stamps.hasil.gov.my/stamps/form/application')
     wait_and_click(driver, By.XPATH, "//div[@class='form-group']//div[@class='radio']//input[@class='radio-per' and @value='4']") # Selecting "Sekuriti" button
     for option in preferred_options:
@@ -34,8 +40,8 @@ def maklumat_am_page_2(driver):
     time.sleep(0.2)
     wait_and_click(driver, By.XPATH, "//input[@value='Simpan Maklumat Am' and @type='button']") # Confirming Maklumat Am
 
-def fill_maklumat_am(driver, date):
-    maklumat_am_page_1(driver, date)
+def fill_maklumat_am(driver, date, firmdata: FirmData):
+    maklumat_am_page_1(driver, date, firmdata)
     maklumat_am_page_2(driver)
 
 def bahagian_a_maklumat_pertama(driver, firmdata: FirmData):

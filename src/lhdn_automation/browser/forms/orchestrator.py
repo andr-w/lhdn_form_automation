@@ -25,7 +25,7 @@ def main_flow(driver, ClientData, FirmData):
     driver.implicitly_wait(WAIT_TIME)
     choose_profile(driver)
     driver.implicitly_wait(WAIT_TIME)
-    fill_maklumat_am(driver, ClientData.EffectiveDate)
+    fill_maklumat_am(driver, ClientData.EffectiveDate, FirmData)
     driver.implicitly_wait(WAIT_TIME)
     fill_bahagian_a(driver, ClientData.SSMOption, FirmData, ClientData)
     driver.implicitly_wait(WAIT_TIME)
