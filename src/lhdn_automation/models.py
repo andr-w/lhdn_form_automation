@@ -21,6 +21,14 @@ MALAYSIAN_STATES = [
     "Labuan",
 ]
 
+BUSINESS_TYPES = [
+    "Milikan Tunggal / Enterprise",
+    "Perkongsian",
+    "Koperasi / Pertubuhan",
+    "Sendirian Berhad / Sdn Bhd",
+    "Berhad / Awam Berhad"
+]
+
 # FirmData field names holding the Pejabat Setem fallback order, highest
 # priority first.
 CITY_PRIORITY_FIELDS = ("CityPriority1", "CityPriority2", "CityPriority3", "CityPriority4", "CityPriority5")

@@ -758,13 +758,19 @@ class FirmDataDialog(tk.Toplevel):
 
         self._fields = dataclasses.fields(models.FirmData)
         self._vars = {}
+        business_type_choices = [""] + models.BUSINESS_TYPES
         text_fields = [f for f in self._fields if f.name not in models.CITY_PRIORITY_FIELDS]
         row = next_row
         for row, field in enumerate(text_fields, start=next_row):
             ttk.Label(body, text=f"{field.name}:").grid(row=row, column=0, sticky="w", pady=4, padx=(0, 10))
             current_value = getattr(app.firm_data, field.name)
             var = tk.StringVar(value="" if current_value is None else str(current_value))
-            ttk.Entry(body, textvariable=var, width=42).grid(row=row, column=1, sticky="w", pady=4)
+            if field.name == "BusinessType":
+                ttk.Combobox(
+                    body, textvariable=var, values=business_type_choices, state="readonly", width=39
+                ).grid(row=row, column=1, sticky="w", pady=4)
+            else:
+                ttk.Entry(body, textvariable=var, width=42).grid(row=row, column=1, sticky="w", pady=4)
             self._vars[field.name] = var
         next_row = row + 1
 
@@ -1076,7 +1082,7 @@ class LHDNApp:
         self.poll_thread = threading.Thread(target=self._poll_loop, daemon=True)
         self.poll_thread.start()
         self.poll_toggle_var.set(True)
-        self.poll_indicator_var.set(f"● Running (every {constants.POLL_INTERVAL}s, hidden browser)")
+        self.poll_indicator_var.set(f"● Running (for {POLL_AUTO_STOP_SECONDS}s, hidden browser)")
         self.poll_indicator_label.config(foreground="green")
         logging.info("Background polling enabled.")
 
