@@ -749,7 +749,7 @@ class FirmDataDialog(tk.Toplevel):
             ttk.Label(
                 body,
                 text="Company details are incomplete - fill in the blank fields below, or use "
-                     "Import Settings to load them from an exported settings file.",
+                    "Import Settings to load them from an exported settings file.",
                 foreground="#a94442",
                 wraplength=420,
                 justify="left",
@@ -832,6 +832,13 @@ class LHDNApp:
         root.protocol("WM_DELETE_WINDOW", self._on_close)
         self.root.after(150, self._drain_log_queue)
 
+        # __init__ runs before main() calls root.mainloop(), so anything that
+        # spawns a background thread touching Tk (root.after, etc.) can't
+        # safely start yet. Since the mainloop is about to start, schedule a 0-delay callback to run after
+        # mainloop starts, which is safe to spawn threads and avoid race conditions.
+        self.root.after(0, self._post_init)
+
+    def _post_init(self):
         # Setting poll_toggle_var above doesn't itself invoke _on_poll_toggle
         # (Tkinter only calls a Checkbutton's command on real user
         # interaction, not on var.set()) - so both of these are started
