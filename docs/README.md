@@ -28,8 +28,12 @@ You may get a Windows Defender notification. If this happens, click on "More inf
    Profiles can be renamed or deleted from this screen. Saved profiles are
    encrypted (Windows DPAPI, see *Security* below) and
    [profiles.py](../src/lhdn_automation/authentication/profiles.py).
+   
   <img width="207" height="212" alt="image" src="https://github.com/user-attachments/assets/65bb4f28-b5a2-4cee-a3f7-db34ec405275" /><br>
   ###### Example profile picker screen with 2 saved profiles
+
+  <img width="278" height="222" alt="image" src="https://github.com/user-attachments/assets/e8d7cf26-101b-42b1-858c-51d118adcf55" /><br>
+  ###### Profile setup menu
 
 Only after both authentication steps succeed will the main window appear.
 
@@ -37,15 +41,15 @@ Only after both authentication steps succeed will the main window appear.
 
 ### Status bar
 
-<img width="551" height="34" alt="image" src="https://github.com/user-attachments/assets/3e691626-2de4-45c1-a7e8-7909d2c73d71" /><br>
-###### Status bar with polling set to Off
+<img width="604" height="35" alt="image" src="https://github.com/user-attachments/assets/42f1e0d1-d299-4820-8fd3-88fea7a43291" /><br>
+##### Status bar with polling set to On
 
 | Control | Function |
 |---|---|
 | **Signed in as: *name*   [Switch]** | Re-opens the profile picker to switch profiles without restarting the app. |
 | **Switch Microsoft Account** | Signs out of the cached Microsoft session and re-triggers sign-in. |
 | **Background polling: ● *status* → Enable** | See *Background polling* below. |
-| **Close Browser** | Closes the most recently opened Selenium browser window and frees system resources. |
+| **Close Browser** | Closes the most recently opened Selenium browser window and frees system resources. Same as closing the browser instance normally but can be used when browser is unresponsive|
 
 ### Background polling for Sharepoint entries
 
@@ -70,7 +74,7 @@ A passive service that runs independent of the open Selenium browser to autofill
 
 ### Edit tab
 
-<img width="674" height="547" alt="image" src="https://github.com/user-attachments/assets/5225f13c-b944-4d69-bedc-3aee1bafa60e" /><br>
+<img width="634" height="516" alt="image" src="https://github.com/user-attachments/assets/d6c9f771-7de1-4e65-a47e-37785ed6b056" /><br>
 ###### The Edit tab showing example SharePoint entries
 
 Lists every SharePoint entry with the `Status`: `Approved`/`Failed` and lets
@@ -86,7 +90,7 @@ the user run the automation for the selected entry.
 
 ### Cleanup tab
 
-<img width="659" height="166" alt="image" src="https://github.com/user-attachments/assets/8852338f-9877-4b36-bc27-bb651b272337" /><br>
+<img width="655" height="164" alt="image" src="https://github.com/user-attachments/assets/8db05d36-7781-4cbb-8ce1-561276278e77" /><br>
 ###### The Cleanup tab with today's date
 
 Cancels test draft entries submitted on a given date —
@@ -110,7 +114,7 @@ used for cleaning up test submissions, not part of the normal workflow.
 
 ###### The inline banner showing options for the matched entry
 
-### Exception handling
+## Exception handling
 
 The program may occasionally run into errors (these could be non-fatal — in which a simple retry would be sufficient, or fatal — whereby a catastrophic
 error involving the program flow/logic has occurred).
@@ -136,17 +140,18 @@ attempts fail, the program has encountered a fatal error. Fatal errors should be
 
 ## Settings
 
-**Configuration → Edit Settings...** opens a menu for the environment variables the user may reasonably want to adjust — poll interval, poll
+**Configuration → Edit Settings...** opens a menu for variables the user may reasonably want to adjust — poll interval, poll
 auto-stop duration, element wait timeout, HTTP request timeout/retries/
 retry delay, and the stale `Processing` threshold (see [app.py](../src/lhdn_automation/gui/app.py)'s
 `SETTINGS_SCHEMA`). Saving applies each value immediately (no restart
 needed) and persists it to `%APPDATA%\LHDNAutomation\settings.json`.
 
-<img width="674" height="44" alt="image" src="https://github.com/user-attachments/assets/407d8324-8a5b-4055-85fa-7961b3d9696c" /><br>
+<img width="159" height="116" alt="image" src="https://github.com/user-attachments/assets/75053825-e126-47b7-bfd0-60fedb5b1a34" />
+<br>
 ###### The configuration header button dropdown
 
 <img width="476" height="266" alt="image" src="https://github.com/user-attachments/assets/e587f98f-c3bc-41b9-948d-522c855e48fd" /><br>
-###### The configuration menu with default values
+###### The settings menu with default values
 
 Excludes preset variables like SharePoint/tenant
 IDs and the eStamp portal URL (see *Configuration*
@@ -167,6 +172,13 @@ Settings...**, tenant/client IDs and other preset variables are never part
 of the export.
 
 ## Configuration
+
+<img width="386" height="326" alt="image" src="https://github.com/user-attachments/assets/ab832ce7-0e53-4588-a8d1-f0e949ca751b" />
+
+<img width="329" height="543" alt="image" src="https://github.com/user-attachments/assets/5d3352b2-e157-4a55-aecc-b347ebc64297" />
+
+<img width="123" height="34" alt="image" src="https://github.com/user-attachments/assets/cbbc49c4-17f1-4f1d-8185-96ed38b2d664" />
+
 
 Settings not mentioned above (like Sharepoint Site/Tenant IDs and secrets) are required to be stored in a real `.env` file (see
 [`.envexample`](../src/lhdn_automation/config/.envexample)). The program will warn you if not all `.env` variables are present.
