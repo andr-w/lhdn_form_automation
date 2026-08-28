@@ -28,26 +28,30 @@ You may get a Windows Defender notification. If this happens, click on "More inf
    Profiles can be renamed or deleted from this screen. Saved profiles are
    encrypted (Windows DPAPI, see *Security* below) and
    [profiles.py](../src/lhdn_automation/authentication/profiles.py).
-  <img width="207" height="212" alt="image" src="https://github.com/user-attachments/assets/65bb4f28-b5a2-4cee-a3f7-db34ec405275" /><br>
+   
+<img width="420" height="427" alt="image" src="https://github.com/user-attachments/assets/b0e3d14c-9bb9-4e63-ba65-4d4870a25d58" /><br>
   ###### Example profile picker screen with 2 saved profiles
 
-Only after both authentication steps succeed will the main window appear.
+  <img width="278" height="222" alt="image" src="https://github.com/user-attachments/assets/e8d7cf26-101b-42b1-858c-51d118adcf55" /><br>
+  ###### Profile setup menu
+
+Only **after** both authentication steps succeed will the main window appear.
 
 ## Main window
 
 ### Status bar
 
-<img width="551" height="34" alt="image" src="https://github.com/user-attachments/assets/3e691626-2de4-45c1-a7e8-7909d2c73d71" /><br>
-###### Status bar with polling set to Off
+<img width="1378" height="64" alt="image" src="https://github.com/user-attachments/assets/f2bf485f-a7bb-434f-bbdb-a0808e746151" /><br>
+##### Status bar with polling set to On
 
 | Control | Function |
 |---|---|
 | **Signed in as: *name*   [Switch]** | Re-opens the profile picker to switch profiles without restarting the app. |
 | **Switch Microsoft Account** | Signs out of the cached Microsoft session and re-triggers sign-in. |
-| **Background polling: ● *status* → Enable** | See *Background polling* below. |
-| **Close Browser** | Closes the most recently opened Selenium browser window and frees system resources. |
+| **Background polling: ● *status* → Enable** | See *Background polling for SharePoint entries* below. |
+| **Close Browser** | Closes the most recently opened Selenium browser window and frees system resources. Same as closing the browser instance normally but can be used when browser is unresponsive |
 
-### Background polling for Sharepoint entries
+### Background polling for SharePoint entries
 
 A passive service that runs independent of the open Selenium browser to autofill missing data from list entries. A headless browser window will open upon detecting an entry with specific missing data.
 
@@ -70,7 +74,7 @@ A passive service that runs independent of the open Selenium browser to autofill
 
 ### Edit tab
 
-<img width="674" height="547" alt="image" src="https://github.com/user-attachments/assets/5225f13c-b944-4d69-bedc-3aee1bafa60e" /><br>
+<img width="634" height="516" alt="image" src="https://github.com/user-attachments/assets/d6c9f771-7de1-4e65-a47e-37785ed6b056" /><br>
 ###### The Edit tab showing example SharePoint entries
 
 Lists every SharePoint entry with the `Status`: `Approved`/`Failed` and lets
@@ -86,7 +90,7 @@ the user run the automation for the selected entry.
 
 ### Cleanup tab
 
-<img width="659" height="166" alt="image" src="https://github.com/user-attachments/assets/8852338f-9877-4b36-bc27-bb651b272337" /><br>
+<img width="655" height="164" alt="image" src="https://github.com/user-attachments/assets/8db05d36-7781-4cbb-8ce1-561276278e77" /><br>
 ###### The Cleanup tab with today's date
 
 Cancels test draft entries submitted on a given date —
@@ -102,15 +106,15 @@ used for cleaning up test submissions, not part of the normal workflow.
   background, red outline) and held there. To continue, select **Continue/Abort**
   in the confirmation banner.
 
-<img width="1228" height="193" alt="image" src="https://github.com/user-attachments/assets/751b6484-9997-4bb2-8922-9304c89f31f0" />
+<img width="1895" height="294" alt="image" src="https://github.com/user-attachments/assets/bf3b173b-ad0e-4ffa-b080-6fa42ca4a752" />
 
 ###### Example of a highlighted entry
 
-<img width="1184" height="166" alt="image" src="https://github.com/user-attachments/assets/a6036154-2720-4e03-943e-35b8caa3dd5f" />
+<img width="1889" height="239" alt="image" src="https://github.com/user-attachments/assets/1399802f-6282-4b20-b8f0-35a04df671f8" />
 
 ###### The inline banner showing options for the matched entry
 
-### Exception handling
+## Exception handling
 
 The program may occasionally run into errors (these could be non-fatal — in which a simple retry would be sufficient, or fatal — whereby a catastrophic
 error involving the program flow/logic has occurred).
@@ -119,62 +123,71 @@ Non-fatal errors can be fixed by clicking on **Continue**, which causes the prog
 Note that the program retries up to three times, including the initial attempt before the error occurs. If all three
 attempts fail, the program has encountered a fatal error. Fatal errors should be reported if they remain unresolved for more than one hour.
  
-* **Fallback behaviour** — The LHDN website is known for removing options from their State/Office dropdowns to more evenly distribute workflow between branches. The program can handles this by featuring a priority list when the highest priority state cannot be found (see [settings.py](../lhdn_automation/config/settings.py))
+* **Fallback behaviour** — The LHDN website is known for removing options from their State/Office dropdowns to more evenly distribute workflow between branches. The program can handles this by featuring a priority list when the highest priority state cannot be found (see [settings.py](../lhdn_automation/config/settings.py) and *Configuration* below)
 
-<img width="670" height="544" alt="image" src="https://github.com/user-attachments/assets/5b9cec82-0fd5-46b2-a804-7c2aa8d7bdc7" /><br>
+<img width="1017" height="817" alt="image" src="https://github.com/user-attachments/assets/738c75ba-4052-4db3-9280-2319d3d7b351" /><br>
 ###### Edit page with confirmation banner after encountering an error. Note the detailed log at the bottom
 
 ## Security
 
-- **MyTax Credentials**: encrypted at rest with Windows DPAPI
+- **MyTax Credentials** — encrypted at rest with Windows DPAPI
   ([secure_storage.py](../src/lhdn_automation/authentication/secure_storage.py)), scoped to the current Windows user account —
   no additional credentials for this app are required, and the ciphertext is
   unreadable on a different machine or Windows login.
-- **Microsoft/SharePoint access**: delegated, per-user OAuth ([auth.py](../src/lhdn_automation/authentication/auth.py)),
-  — every SharePoint write is traceable to the
-  signed-in user. Should be reliant on the delegated `Sites.Selected` Graph permission (app access scoped to sites granted by an Entra admin).
+- **Microsoft/SharePoint access** — delegated, per-user OAuth ([auth.py](../src/lhdn_automation/authentication/auth.py)),
+  — every SharePoint write is traceable to the signed-in user. Should be reliant on the delegated `Sites.Selected` Graph permission (app access scoped to sites granted by an Entra admin).
 
-## Settings
+## Configuration
+### Application settings
 
-**Configuration → Edit Settings...** opens a menu for the environment variables the user may reasonably want to adjust — poll interval, poll
+<img width="315" height="234" alt="image" src="https://github.com/user-attachments/assets/43508757-c2ac-459e-af49-2630096f7b8c" /><br>
+###### The configuration header button dropdown
+
+**Edit Settings...**: opens a menu for variables the user may reasonably want to adjust — poll interval, poll
 auto-stop duration, element wait timeout, HTTP request timeout/retries/
 retry delay, and the stale `Processing` threshold (see [app.py](../src/lhdn_automation/gui/app.py)'s
 `SETTINGS_SCHEMA`). Saving applies each value immediately (no restart
 needed) and persists it to `%APPDATA%\LHDNAutomation\settings.json`.
 
-<img width="674" height="44" alt="image" src="https://github.com/user-attachments/assets/407d8324-8a5b-4055-85fa-7961b3d9696c" /><br>
-###### The configuration header button dropdown
+<img width="951" height="593" alt="image" src="https://github.com/user-attachments/assets/2e8f967e-19d1-4a25-8819-09346085eb36" /><br>
+###### The settings menu with default values
 
-<img width="476" height="266" alt="image" src="https://github.com/user-attachments/assets/e587f98f-c3bc-41b9-948d-522c855e48fd" /><br>
-###### The configuration menu with default values
+**Edit SharePoint Configuration...**: opens a menu for adjusting SharePoint/URL variables. This includes host name, site path, list names and stamping portal URL.
 
-Excludes preset variables like SharePoint/tenant
-IDs and the eStamp portal URL (see *Configuration*
-below).
+<img width="386" height="326" alt="image" src="https://github.com/user-attachments/assets/ab832ce7-0e53-4588-a8d1-f0e949ca751b" /><br>
 
-### Export / Import Settings
+###### The SharePoint Configuration menu    
 
-**Configuration → Export Settings...** writes the current `settings.json`
-contents to a `settings_export.json` file next to `.env`, so it can be
-handed to another install or committed alongside the rest of the app's
-local config.
+**Edit Company Details...**: opens a menu for amending the default company data that will be used for stamping. This menu has two sections:    
+  1. Company Data — features fields that allows the user to customise company data.
+  2. City/State priority — features 5 dropdown boxes for the problem stated above in *Exception Handling* whereby multiple stamping office locations can be chosen in the event that one of the options is missing from the website.
 
-**Configuration → Import Settings...** opens a file browser to pick any
-exported settings JSON file, then merges it into `settings.json` the same
-way **Edit Settings...** does, and re-applies settings, SharePoint
-configuration, and company details immediately. As with **Edit
-Settings...**, tenant/client IDs and other preset variables are never part
-of the export.
+<img width="329" height="543" alt="image" src="https://github.com/user-attachments/assets/5d3352b2-e157-4a55-aecc-b347ebc64297" /><br>
 
-## Configuration
+###### The Company Details menu. Note that certain fields are dropdown menus.
 
-Settings not mentioned above (like Sharepoint Site/Tenant IDs and secrets) are required to be stored in a real `.env` file (see
+Settings not mentioned above (like SharePoint Site/Tenant IDs and secrets) are required to be stored in a real `.env` file (see
 [`.envexample`](../src/lhdn_automation/config/.envexample)). The program will warn you if not all `.env` variables are present.
+
 ## Distribution
 
 [build.ps1](../src/lhdn_automation/tools/build.ps1) builds a standalone Windows app via PyInstaller,
 inside a disposable virtualenv (to ensure the bundle is not bloated by packages already in the environment during building) and packages the
 result into a single `dist\LHDN-Automation.zip` — no additional `pip install` required.
+
+### Export / Import Settings
+
+**Export Settings...** writes the current `settings.json`
+contents to a `settings_export.json` file next to `.env`, so it can be
+handed to another install or committed alongside the rest of the app's
+local config.
+
+**Import Settings...** opens a file browser to pick any
+exported settings JSON file, then merges it into `settings.json` the same
+way **Edit Settings...** does, and re-applies settings, SharePoint
+configuration, and company details immediately. As with **Edit
+Settings...**, tenant/client IDs and other preset variables are never part
+of the export.
 
 ## File reference
 
